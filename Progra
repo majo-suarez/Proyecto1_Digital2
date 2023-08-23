@@ -2,7 +2,7 @@
 #include <driver/ledc.h>
 
 #define ADC_VREF_mV    3300.0 // minivolts
-#define ADC_RESOLUTION 4096.0
+#define ADC_RESOLUTION 4096.0 // Resolución del ADC
 #define pinsensor       36 // ESP32 pin GPIO36 (ADC0) conectado a LM35
 #define botpin         14 // Pin de boton
 
@@ -25,14 +25,22 @@ void setup() {
     pinMode(ledr, OUTPUT);
 
     configurarPWM();
+    int leerbot = digitalRead(botpin);
+    bool banderabot = false; 
 
     Serial.begin(9600);
 }
 
 void loop() {
 
-    int leerbot = digitalRead(botpin);
     
+
+    }
+
+
+
+void banderabot(void){
+  if (leerbot == LOW){
     // Leer valor ADC del sensor de temperatura
     int adcVal = analogRead(pinsensor);
     // Convertir ADC a voltaje minivolts
@@ -41,7 +49,6 @@ void loop() {
     float tempC = milliVolt / 10;
     // Convertir de °C a °F
     float tempF = tempC * 9 / 5 + 32;
-
     // Imprimir en monitor serial
     Serial.print("Temperature: ");
     Serial.print(tempC);   // Imprime temperatura en °C
@@ -52,7 +59,7 @@ void loop() {
 
     delay(500);
 }
-
+}
 
 
 void configurarPWM(void)
