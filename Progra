@@ -1,22 +1,30 @@
 #include <Arduino.h>
 #include <driver/ledc.h>
 
-#define ADC_VREF_mV    3300.0 // minivolts
+#define ADC_VREF_mV    3500.0 // minivolts
 #define ADC_RESOLUTION 4096.0 // Resolución del ADC
-#define pinsensor       36 // ESP32 pin GPIO36 (ADC0) conectado a LM35
-#define botpin         14 // Pin de boton
+#define pinsensor      36     // ESP32 pin GPIO36 (ADC0) conectado a LM35
+#define botpin         14     // Pin de botón
 
-#define ledv           23 // Led verde
-#define leda           22 // Led amarilla
-#define ledr           1 // Led roja
+#define ledv           3     // Led verde
+#define leda           22     // Led amarilla
+#define ledr           21      // Led roja
+#define servo          19
 
 #define ledvChannel 1
 #define ledaChannel 2
 #define ledrChannel 3
+#define servoChannel 4
 #define freqPWM1 1000
-#define freqPWM2 500
+#define freqPWM2 1000
+#define freqPWM3 1000
+
 #define resolution 8
 
+void configurarPWM();
+void moverServo(int angulo);
+
+bool banderabot = false;
 
 void setup() {
     pinMode(botpin, INPUT_PULLUP);
@@ -25,50 +33,72 @@ void setup() {
     pinMode(ledr, OUTPUT);
 
     configurarPWM();
-    int leerbot = digitalRead(botpin);
-    bool banderabot = false; 
-
     Serial.begin(9600);
 }
 
 void loop() {
+    int leerbot = digitalRead(botpin);
 
-    
+    if (leerbot == LOW && !banderabot) {
+        banderabot = true;
 
+        // Leer valor ADC del sensor de temperatura
+        int adcVal = analogRead(pinsensor);
+        // Convertir ADC a voltaje minivolts
+        float milliVolt = adcVal * (ADC_VREF_mV / ADC_RESOLUTION);
+        // Convertir voltaje a temperatura en °C
+        float tempC = milliVolt / 10;
+
+        // Apagar todos los LEDs al principio
+        ledcWrite(ledvChannel, 0);
+        ledcWrite(ledaChannel, 0);
+        ledcWrite(ledrChannel, 0);
+
+        // Control de LEDs en función de la temperatura
+        if (tempC < 37.0) {
+            ledcWrite(ledvChannel, 255);
+            ledcWrite(ledaChannel, 0);
+            ledcWrite(ledrChannel, 0);
+            moverServo(0);  // Mover el servo a 0 grados
+            Serial.println("Caso 37");
+        } else if (tempC < 37.5) {
+            ledcWrite(ledvChannel, 0);
+            ledcWrite(ledaChannel, 255);
+            ledcWrite(ledrChannel, 0);
+            moverServo(90);  // Mover el servo a 90 grados
+            Serial.println("Caso 37.5");
+        } else if (tempC >= 37.5){
+            ledcWrite(ledvChannel, 0);
+            ledcWrite(ledaChannel, 0);
+            ledcWrite(ledrChannel, 255);
+            moverServo(180);  // Mover el servo a 180 grados
+            Serial.println("Caso 38");
+        }
+
+        // Imprimir en monitor serial
+        Serial.print("Temperature: ");
+        Serial.print(tempC);   // Imprime temperatura en °C
+        Serial.println("°C");
     }
 
-
-
-void banderabot(void){
-  if (leerbot == LOW){
-    // Leer valor ADC del sensor de temperatura
-    int adcVal = analogRead(pinsensor);
-    // Convertir ADC a voltaje minivolts
-    float milliVolt = adcVal * (ADC_VREF_mV / ADC_RESOLUTION);
-    // Convertir voltaje a temperatura en °C
-    float tempC = milliVolt / 10;
-    // Convertir de °C a °F
-    float tempF = tempC * 9 / 5 + 32;
-    // Imprimir en monitor serial
-    Serial.print("Temperature: ");
-    Serial.print(tempC);   // Imprime temperatura en °C
-    Serial.print("°C");
-    Serial.print("  ~  "); // Separador entre °C y °F
-    Serial.print(tempF);   // Imprime temperatura en °F
-    Serial.println("°F");
-
-    delay(500);
-}
+    if (leerbot == HIGH) {
+        banderabot = false;
+    }
 }
 
+void configurarPWM() {
+    ledcSetup(ledvChannel, freqPWM1, resolution);
+    ledcSetup(ledaChannel, freqPWM2, resolution);
+    ledcSetup(ledrChannel, freqPWM3, resolution);
+    ledcSetup(servoChannel,500, 8 );
 
-void configurarPWM(void)
-{
-  ledcSetup(ledvChannel, freqPWM1, resolution);
-  ledcSetup(ledaChannel, freqPWM2, resolution);
-  ledcSetup(ledrChannel, freqPWM2, resolution);
+    ledcAttachPin(ledv, ledvChannel);
+    ledcAttachPin(leda, ledaChannel);
+    ledcAttachPin(ledr, ledrChannel);
+    ledcAttachPin(servo ,servoChannel);
+}
 
-  ledcAttachPin(ledv, ledvChannel);
-  ledcAttachPin(leda, ledaChannel);
-  ledcAttachPin(ledr, ledrChannel);
+void moverServo(int angulo) {
+    int dutyCycle = map(angulo, 0, 180, 40, 115);  // Mapear ángulo a ciclo de trabajo
+    ledcWrite(servoChannel, dutyCycle);  
 }
