@@ -15,7 +15,7 @@
 #define dis2 0
 #define dis3 2
 
-#define ADC_VREF_mV 3500.0    // minivolts
+#define ADC_VREF_mV 3300.0    // minivolts
 #define ADC_RESOLUTION 4096.0 // Resolución del ADC
 #define pinsensor 36          // ESP32 pin GPIO36 (ADC0) conectado a LM35
 #define botpin 18             // Pin de botón
@@ -57,6 +57,8 @@ void setup()
   pinMode(ledv, OUTPUT);
   pinMode(leda, OUTPUT);
   pinMode(ledr, OUTPUT);
+ // pinMode(pinsensor, INPUT);
+  //pinMode(pinsensor, OUTPUT);
 
   // Apagar todos los LEDs al principio
   ledcWrite(ledvChannel, 0);
@@ -78,6 +80,7 @@ void loop()
 
     // Leer valor ADC del sensor de temperatura
     int adcVal = analogRead(pinsensor);
+    //Serial.print(adcVal);
     // Convertir ADC a voltaje minivolts
     float milliVolt = adcVal * (ADC_VREF_mV / ADC_RESOLUTION);
     // Convertir voltaje a temperatura en °C
@@ -110,7 +113,7 @@ void loop()
     }
 
     // Imprimir en monitor serial
-    Serial.print("Temperature: ");
+    Serial.print("Temperatura: ");
     Serial.print(tempC); // Imprime temperatura en °C
     Serial.println("°C");
 
@@ -149,23 +152,20 @@ void mostrarTemperaturaEnDisplay(float tempC)
   int temperaturaEntera = int(tempC);
 
   // Mostrar la temperatura en los tres displays
-  digitalWrite(dis1, HIGH);
-  digitalWrite(dis2, LOW);
-  digitalWrite(dis2, LOW);
+  digitalWrite(dis1, LOW);
   desplegarValor(temperaturaEntera % 10); // Unidades
   delay(5);
+  digitalWrite(dis1, HIGH);
 
-  digitalWrite(dis1, LOW);
-  digitalWrite(dis2, HIGH);
-  digitalWrite(dis3, LOW);
+  digitalWrite(dis2, LOW);
   desplegarValor((temperaturaEntera / 10) % 10); // Decenas
   desplegarPunto(true);
   delay(5);
+  digitalWrite(dis2, HIGH);
 
-  digitalWrite(dis1, LOW);
-  digitalWrite(dis2, LOW);
-  digitalWrite(dis3, HIGH);
+  digitalWrite(dis3, LOW);
   desplegarValor((temperaturaEntera / 100) % 10); // Centenas
   desplegarPunto(false);
   delay(5);
+  digitalWrite(dis1, HIGH);
 }
