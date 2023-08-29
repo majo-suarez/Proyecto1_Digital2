@@ -150,10 +150,10 @@ void desplegarPunto(boolean punto)
 {
     if (punto)
     {
-        digitalWrite(pindP, HIGH);
+        digitalWrite(pindP, LOW);
     }
     else
     {
-        digitalWrite(pindP, LOW);
+        digitalWrite(pindP, HIGH);
     }
 }
