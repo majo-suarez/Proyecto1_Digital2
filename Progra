@@ -12,9 +12,9 @@
 #define pG 12
 #define pdP 13
 
-#define dis1 4
-#define dis2 0
-#define dis3 2
+#define dis1 5
+#define dis2 17
+#define dis3 16
 
 #define ADC_VREF_mV 3300.0    // minivolts
 #define ADC_RESOLUTION 4096.0 // Resolución del ADC
@@ -39,10 +39,6 @@
 float tempC;
 float milliVolt;
 
-int count = 0;
-long lastTime;
-unsigned long tiempo = 0;
-
 // this int will hold the current count for our sketch
 volatile float temperatura = tempC;
 
@@ -61,7 +57,7 @@ bool banderabot = false;
 
 void setup()
 {
-
+  //*******************ADAFRUIT*****************************************//
   // start the serial connection
   Serial.begin(115200);
 
@@ -83,7 +79,7 @@ void setup()
   Serial.println();
   Serial.println(io.statusText());
 
-//*************************************************************************//
+//**************************DISPLAYS**********************************//
   configurarDisplay7(pA, pB, pC, pD, pE, pF, pG, pdP);
 
   pinMode(dis1, OUTPUT);
@@ -93,21 +89,20 @@ void setup()
   digitalWrite(dis1, LOW);
   digitalWrite(dis2, LOW);
   digitalWrite(dis3, LOW);
- // mostrarTemperaturaEnDisplay(0);
-  pinMode(botpin, INPUT_PULLUP);
- 
+  
+  //Configuracion leds y servo
   pinMode(botpin, INPUT_PULLUP);
   pinMode(ledv, OUTPUT);
   pinMode(leda, OUTPUT);
   pinMode(ledr, OUTPUT);
- // pinMode(pinsensor, INPUT);
-  //pinMode(pinsensor, OUTPUT);
+
 
   // Apagar todos los LEDs al principio
   ledcWrite(ledvChannel, 0);
   ledcWrite(ledaChannel, 0);
   ledcWrite(ledrChannel, 0);
 
+  //void pwm
   configurarPWM();
 
   
@@ -115,36 +110,28 @@ void setup()
 
 void loop()
 {
-
-
-
-
-
-
-
   // Mostrar la temperatura en los displays de 7 segmentos
+  mostrarTemperaturaEnDisplay(tempC);
 
+  //Convertir la temperatura a digital
   convertirTemp();
+
+  //Condiciones del boton
   int leerbot = digitalRead(botpin);
   if (leerbot == LOW && !banderabot)
   {
+    //**************************ADAFRUIT**************************//
     banderabot = true;
     io.run();
-
- 
 
     // save count to the 'counter' feed on Adafruit IO
     Serial.print("sending -> ");
     Serial.println(tempC);
     temperaturaCanal->save(tempC);
 
- 
-
-
-  // (1000 milliseconds == 1 second) during each loop.
+    // (1000 milliseconds == 1 second) during each loop.
     delay(3000);
-    //mostrarTemperaturaEnDisplay(tempC);
-    
+    //*********************************************************************//
 
     // Control de LEDs en función de la temperatura
     if (tempC < 37.0)
@@ -180,13 +167,14 @@ void loop()
     
   }
 
+  //Otra condicion de boton
   if (leerbot == HIGH)
   {
     banderabot = false;
   }
-  mostrarTemperaturaEnDisplay(tempC);
 }
 
+//Funcion que controla pulsos de leds y servos
 void configurarPWM()
 {
   ledcSetup(ledvChannel, freqPWM1, resolution);
@@ -200,12 +188,14 @@ void configurarPWM()
   ledcAttachPin(servo, servoChannel);
 }
 
+//Funcion de mapeo de angulo de servo
 void moverServo(int angulo)
 {
   int dutyCycle = map(angulo, 0, 180, 40, 115); // Mapear ángulo a ciclo de trabajo
   ledcWrite(servoChannel, dutyCycle);
 }
 
+//Funcion de conversion de temperatura para displays
 void mostrarTemperaturaEnDisplay(float tempC)
 {
   int temperaturaEntera, tempa, decenas, unidades, centenas;
@@ -216,38 +206,29 @@ void mostrarTemperaturaEnDisplay(float tempC)
   decenas = tempa / 100;
   unidades = (tempa - (decenas*100))/10;
   centenas = tempa - (unidades*10);
-  // Mostrar la temperatura en los tres displays
 
+  // Mostrar la temperatura en los tres displays
   digitalWrite(dis1, HIGH);
   digitalWrite(dis2, LOW);
   digitalWrite(dis3, LOW);
-  
   desplegarValor(decenas); // Decenas
-  tiempo = millis();
-  while (millis() < tiempo + 5);
-  
-  
-  //digitalWrite(dis1, HIGH);
 
   digitalWrite(dis1, LOW);
   digitalWrite(dis2, HIGH);
   digitalWrite(dis3, LOW);
   desplegarValor(unidades); // Unidades
   desplegarPunto(true);
-  tiempo = millis();
-  while (millis() < tiempo + 5);
-  //digitalWrite(dis2, HIGH);
+
   
   digitalWrite(dis1, LOW);
   digitalWrite(dis2, LOW);
   digitalWrite(dis3, HIGH);
   desplegarValor(centenas); // Centenas
   desplegarPunto(false);
-  tiempo = millis();
-  while (millis() < tiempo + 5);
-  //digitalWrite(dis1, HIGH);
+
 }
 
+//Funcion de conversion de temperatura a analogico
 void convertirTemp()
 {
   // Leer valor ADC del sensor de temperatura
