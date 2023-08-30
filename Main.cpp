@@ -1,8 +1,14 @@
+//Universidad del Valle de Guatemala
+//Proyecto 1 Electrónica Digital 2
+//María José Suárez 21121
+
+// Se incluyen librerías
 #include <Arduino.h>
 #include <driver/ledc.h>
 #include <display7.h>
-#include "config.h"
+#include <config.h>
 
+//Definición de pines de segmentos de Display
 #define pA 32
 #define pB 33
 #define pC 25
@@ -12,20 +18,24 @@
 #define pG 12
 #define pdP 13
 
+//Pines de cada display
 #define dis1 5
 #define dis2 17
 #define dis3 16
 
+//Sensor de temperatura
 #define ADC_VREF_mV 3300.0    // minivolts
 #define ADC_RESOLUTION 4096.0 // Resolución del ADC
 #define pinsensor 36          // ESP32 pin GPIO36 (ADC0) conectado a LM35
+
 #define botpin 18             // Pin de botón
 
 #define ledv 23 // Led verde
 #define leda 22 // Led amarilla
 #define ledr 21  // Led roja
-#define servo 19
+#define servo 19 // Servo motor
 
+// Canales y frecuencias de LEDs y Servo
 #define ledvChannel 1
 #define ledaChannel 2
 #define ledrChannel 3
@@ -33,11 +43,12 @@
 #define freqPWM1 1000
 #define freqPWM2 1000
 #define freqPWM3 1000
-
 #define resolution 8
 
+// Variables globales
 float tempC;
 float milliVolt;
+bool banderabot = false;
 
 // this int will hold the current count for our sketch
 volatile float temperatura = tempC;
@@ -45,15 +56,11 @@ volatile float temperatura = tempC;
 // set up the 'counter' feed
 AdafruitIO_Feed *temperaturaCanal = io.feed("Temperatura");
 
-
-
+// Funciones 
 void configurarPWM();
 void moverServo(int angulo);
 void mostrarTemperaturaEnDisplay(float tempC);
 void convertirTemp();
-
-
-bool banderabot = false;
 
 void setup()
 {
@@ -102,10 +109,8 @@ void setup()
   ledcWrite(ledaChannel, 0);
   ledcWrite(ledrChannel, 0);
 
-  //void pwm
+  //void PWM
   configurarPWM();
-
-  
 }
 
 void loop()
@@ -131,12 +136,13 @@ void loop()
 
     // (1000 milliseconds == 1 second) during each loop.
     delay(3000);
-    //*********************************************************************//
+
+    //************************************************************//
 
     // Control de LEDs en función de la temperatura
     if (tempC < 37.0)
     {
-      ledcWrite(ledvChannel, 255);
+      ledcWrite(ledvChannel, 255); // Encender LED verde
       ledcWrite(ledaChannel, 0);
       ledcWrite(ledrChannel, 0);
       moverServo(0); // Mover el servo a 0 grados
@@ -145,7 +151,7 @@ void loop()
     else if (tempC < 37.5)
     {
       ledcWrite(ledvChannel, 0);
-      ledcWrite(ledaChannel, 255);
+      ledcWrite(ledaChannel, 255); // Encender LED amarilla
       ledcWrite(ledrChannel, 0);
       moverServo(90); // Mover el servo a 90 grados
       Serial.println("Caso 37.5");
@@ -154,7 +160,7 @@ void loop()
     {
       ledcWrite(ledvChannel, 0);
       ledcWrite(ledaChannel, 0);
-      ledcWrite(ledrChannel, 255);
+      ledcWrite(ledrChannel, 255); // Encender LED roja
       moverServo(180); // Mover el servo a 180 grados
       Serial.println("Caso 38");
     }
@@ -162,9 +168,7 @@ void loop()
     // Imprimir en monitor serial
     Serial.print("Temperatura: ");
     Serial.print(tempC); // Imprime temperatura en °C
-    Serial.println(" °C");
-
-    
+    Serial.println(" °C");   
   }
 
   //Otra condicion de boton
@@ -174,7 +178,7 @@ void loop()
   }
 }
 
-//Funcion que controla pulsos de leds y servos
+//Funcion que controla pulsos de LEDs y Servo
 void configurarPWM()
 {
   ledcSetup(ledvChannel, freqPWM1, resolution);
@@ -188,7 +192,7 @@ void configurarPWM()
   ledcAttachPin(servo, servoChannel);
 }
 
-//Funcion de mapeo de angulo de servo
+//Funcion de mapeo de angulo de Servo
 void moverServo(int angulo)
 {
   int dutyCycle = map(angulo, 0, 180, 40, 115); // Mapear ángulo a ciclo de trabajo
@@ -225,7 +229,6 @@ void mostrarTemperaturaEnDisplay(float tempC)
   digitalWrite(dis3, HIGH);
   desplegarValor(centenas); // Centenas
   desplegarPunto(false);
-
 }
 
 //Funcion de conversion de temperatura a analogico
@@ -238,6 +241,4 @@ void convertirTemp()
     milliVolt = adcVal * (ADC_VREF_mV / ADC_RESOLUTION);
     // Convertir voltaje a temperatura en °C
     tempC = milliVolt / 10.0;
-
 }
-
